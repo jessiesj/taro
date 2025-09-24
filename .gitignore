@@ -1,0 +1,27 @@
+# 临时文件和日志
+*.log
+*.tmp
+*.temp
+
+# 编辑器配置文件
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# 操作系统生成的文件
+.DS_Store
+Thumbs.db
+
+# 环境变量文件
+.env
+.env.local
+.env.production.local
+
+# 其他临时文件
+*.swp
+*.swo
+*~
+
+# 不要忽略构建文件（这些是需要部署的）
+!index.html
+!assets/
