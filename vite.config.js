@@ -3,6 +3,6 @@ import vue from '@vitejs/plugin-vue'
 
 export default defineConfig({
   plugins: [vue()],
-  // 使用hash路由模式，不需要特殊的base配置
-  base: '/',
+  // 使用相对路径构建，确保在GitHub Pages上正确加载资源
+  base: './',
 })
