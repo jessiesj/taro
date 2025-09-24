@@ -145,6 +145,8 @@
 </template>
 
 <script>
+import { ref, reactive, onMounted, watch, nextTick } from 'vue'
+import { useRouter } from 'vue-router'
 import TarotCard from '../components/TarotCard.vue'
 import { getRandomCards, getFortuneTypeConfig, majorArcana } from '../data/tarotCards.js'
 import { generateTarotReading } from '../utils/aiService.js'
@@ -160,58 +162,40 @@ export default {
       required: true
     }
   },
-  data() {
-    return {
-      config: null,
-      cards: [],
-      reading: null,
-      hasDrawn: false,
-      isDrawing: false,
-      isGeneratingReading: false,
-      drawingMode: 'auto', // 'auto' 或 'manual'
-      isManualSelection: false,
-      availableCards: [],
-      selectedCards: [],
-      tarotCards: majorArcana // 存储所有塔罗牌数据
-    }
-  },
-  mounted() {
-    // 初始化占卜类型配置
-    this.config = getFortuneTypeConfig(this.type)
-    // 确保配置不为空
-    if (!this.config) {
-      this.config = getFortuneTypeConfig('general')
-    }
-  },
-  // 添加一个watch来监听type变化
-  watch: {
-    type: {
-      handler(newType) {
-        this.config = getFortuneTypeConfig(newType)
-      },
-      immediate: true
-    }
-  },
-  methods: {
-    goBack() {
-      this.$router.push('/')
-    },
+  setup(props) {
+    const router = useRouter()
     
-    async drawCards() {
+    const config = ref(null)
+    const cards = ref([])
+    const reading = ref(null)
+    const hasDrawn = ref(false)
+    const isDrawing = ref(false)
+    const isGeneratingReading = ref(false)
+    const drawingMode = ref('auto') // 'auto' 或 'manual'
+    const isManualSelection = ref(false)
+    const availableCards = ref([])
+    const selectedCards = ref([])
+    const tarotCards = ref(majorArcana) // 存储所有塔罗牌数据
+    
+    const goBack = () => {
+      router.push('/')
+    }
+    
+    const drawCards = async () => {
       // 重置状态
-      this.hasDrawn = false
-      this.cards = []
-      this.reading = null
-      this.isDrawing = true
+      hasDrawn.value = false
+      cards.value = []
+      reading.value = null
+      isDrawing.value = true
       
       // 强制UI更新
-      await this.$nextTick()
+      await nextTick()
       
       // 获取随机卡牌
       const randomCards = getRandomCards()
       
       // 为每张卡牌添加动画状态
-      this.cards = randomCards.map(card => ({
+      cards.value = randomCards.map(card => ({
         ...card,
         isVisible: false,
         isFlipping: false
@@ -220,69 +204,69 @@ export default {
       // 小延迟确保UI有时间更新
       await new Promise(resolve => setTimeout(resolve, 100))
       
-      this.hasDrawn = true
+      hasDrawn.value = true
       
       // 执行抽牌动画（依次翻转每张牌）
-      for (let i = 0; i < this.cards.length; i++) {
+      for (let i = 0; i < cards.value.length; i++) {
         // 延迟显示每张牌
         await new Promise(resolve => setTimeout(resolve, i * 1000))
         
         // 开始翻转
-        this.cards[i].isFlipping = true
+        cards.value[i].isFlipping = true
         
         // 翻转动画持续时间
         await new Promise(resolve => setTimeout(resolve, 800))
         
         // 完成翻转
-        this.cards[i].isVisible = true
-        this.cards[i].isFlipping = false
+        cards.value[i].isVisible = true
+        cards.value[i].isFlipping = false
       }
       
-      this.isDrawing = false
+      isDrawing.value = false
       
       // 开始生成AI解读
-      await this.generateReading()
-    },
+      await generateReading()
+    }
     
     // 显示手动选择界面
-    showManualSelection() {
+    const showManualSelection = () => {
       // 重置选择状态
-      this.selectedCards = []
+      selectedCards.value = []
       
       // 准备所有可用的卡牌
       // 使用已经导入的tarotCards数据
-      this.availableCards = this.tarotCards.map(card => ({
+      availableCards.value = tarotCards.value.map(card => ({
         ...card,
         isReversed: Math.random() < 0.3
       }))
-      this.isManualSelection = true
-    },
+      isManualSelection.value = true
+    }
     
     // 选择卡牌
-    selectCard(card) {
+    const selectCard = (card) => {
       // 检查是否已经选择了这张牌
-      const isAlreadySelected = this.selectedCards.some(c => c.id === card.id)
+      const isAlreadySelected = selectedCards.value.some(c => c.id === card.id)
       
       if (isAlreadySelected) {
         // 如果已经选择，则移除
-        this.selectedCards = this.selectedCards.filter(c => c.id !== card.id)
-      } else if (this.selectedCards.length < 3) {
+        selectedCards.value = selectedCards.value.filter(c => c.id !== card.id)
+      } else if (selectedCards.value.length < 3) {
         // 如果未满3张，则添加
-        this.selectedCards.push(card)
+        selectedCards.value.push(card)
       }
-    },
+    }
     
     // 确认手动选择
-    async confirmManualSelection() {
-      if (this.selectedCards.length !== 3) {
+    const confirmManualSelection = async () => {
+      if (selectedCards.value.length !== 3) {
         return
       }
       
-      this.isDrawing = true
-      this.isManualSelection = false
+      isDrawing.value = true
+      isManualSelection.value = false
       
       // 为每张卡牌添加动画状态
-      this.cards = this.selectedCards.map(card => ({
+      cards.value = selectedCards.value.map(card => ({
         ...card,
         isVisible: false,
         isFlipping: false
@@ -291,40 +275,40 @@ export default {
       // 小延迟确保UI有时间更新
       await new Promise(resolve => setTimeout(resolve, 100))
       
-      this.hasDrawn = true
+      hasDrawn.value = true
       
       // 执行抽牌动画（依次翻转每张牌）
-      for (let i = 0; i < this.cards.length; i++) {
+      for (let i = 0; i < cards.value.length; i++) {
         // 延迟显示每张牌
         await new Promise(resolve => setTimeout(resolve, i * 1000))
         
         // 开始翻转
-        this.cards[i].isFlipping = true
+        cards.value[i].isFlipping = true
         
         // 翻转动画持续时间
         await new Promise(resolve => setTimeout(resolve, 800))
         
         // 完成翻转
-        this.cards[i].isVisible = true
-        this.cards[i].isFlipping = false
+        cards.value[i].isVisible = true
+        cards.value[i].isFlipping = false
       }
       
-      this.isDrawing = false
+      isDrawing.value = false
       
       // 开始生成AI解读
-      await this.generateReading()
-    },
+      await generateReading()
+    }
     
-    async generateReading() {
-      this.isGeneratingReading = true
+    const generateReading = async () => {
+      isGeneratingReading.value = true
       
       try {
         // 调用AI服务生成解读
-        this.reading = await generateTarotReading(this.cards, this.type, this.config)
+        reading.value = await generateTarotReading(cards.value, props.type, config.value)
       } catch (error) {
         console.error('生成解读失败:', error)
         // 显示错误信息
-        this.reading = {
+        reading.value = {
           title: '解读生成失败',
           past: '抱歉，暂时无法生成过去的解读。',
           present: '请稍后再试，或重新抽取牌阵。',
@@ -333,8 +317,43 @@ export default {
           style: 'general'
         }
       } finally {
-        this.isGeneratingReading = false
+        isGeneratingReading.value = false
       }
+    }
+    
+    // 初始化
+    onMounted(() => {
+      // 初始化占卜类型配置
+      config.value = getFortuneTypeConfig(props.type)
+      // 确保配置不为空
+      if (!config.value) {
+        config.value = getFortuneTypeConfig('general')
+      }
+    })
+    
+    // 监听type变化
+    watch(() => props.type, (newType) => {
+      config.value = getFortuneTypeConfig(newType)
+    })
+    
+    return {
+      config,
+      cards,
+      reading,
+      hasDrawn,
+      isDrawing,
+      isGeneratingReading,
+      drawingMode,
+      isManualSelection,
+      availableCards,
+      selectedCards,
+      tarotCards,
+      goBack,
+      drawCards,
+      showManualSelection,
+      selectCard,
+      confirmManualSelection,
+      generateReading
     }
   }
 }

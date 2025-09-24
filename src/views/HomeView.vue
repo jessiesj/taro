@@ -41,11 +41,19 @@
 </template>
 
 <script>
+import { useRouter } from 'vue-router'
+
 export default {
   name: 'HomeView',
-  methods: {
-    navigateTo(type) {
-      this.$router.push({ name: 'fortune', params: { type } })
+  setup() {
+    const router = useRouter()
+    
+    const navigateTo = (type) => {
+      router.push({ name: 'fortune', params: { type } })
+    }
+    
+    return {
+      navigateTo
     }
   }
 }
