@@ -133,6 +133,9 @@
           返回主页
         </button>
       </div>
+      
+      <!-- AI对话框 -->
+      <AIChatBox :reading="reading" :cards="cards" />
     </div>
     
     <!-- 生成解读中 -->
@@ -148,13 +151,15 @@
 import { ref, reactive, onMounted, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import TarotCard from '../components/TarotCard.vue'
+import AIChatBox from '../components/AIChatBox.vue'
 import { getRandomCards, getFortuneTypeConfig, majorArcana } from '../data/tarotCards.js'
 import { generateTarotReading } from '../utils/aiService.js'
 
 export default {
   name: 'FortuneView',
   components: {
-    TarotCard
+    TarotCard,
+    AIChatBox
   },
   props: {
     type: {
