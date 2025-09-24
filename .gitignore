@@ -23,5 +23,5 @@ Thumbs.db
 *~
 
 # 不要忽略构建文件（这些是需要部署的）
+!dist/
 !index.html
-!assets/
